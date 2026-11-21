@@ -37,9 +37,9 @@ INK = (20, 36, 62)           # navy, ~15:1 on white, ~12:1 on cream
 BODY = (31, 42, 58)          # near-navy body copy
 RED = (176, 30, 36)          # kicker red, ~7:1 on white
 RULE = (196, 188, 168)       # hairline rules
-LAND = (203, 192, 168)       # map continents, darker so land reads small
-LAND2 = (186, 196, 178)      # second land tone
-SEA = (233, 236, 228)        # map sea, still light
+LAND = (91, 140, 90)         # map continents: strong atlas green #5b8c5a
+LAND2 = (110, 158, 95)       # second land tone, lighter green #6e9e5f
+SEA = (207, 227, 238)        # map sea: pale blue #cfe3ee, green land stands out
 CHIP_BG = (238, 233, 219)    # stat chip fill
 
 FONT_DIR = "/usr/share/fonts/truetype/liberation"
@@ -401,14 +401,14 @@ def paint_map(draw, x0, y0, w, h):
     ]
     for poly in continents:
         pts = [(x0 + px, y0 + py) for px, py in poly]
-        draw.polygon(pts, fill=LAND, outline=(188, 178, 152))
+        draw.polygon(pts, fill=LAND, outline=(58, 96, 58))
     # Greenland + Britain hints
     draw.ellipse([x0 + 138, y0 + 8, x0 + 168, y0 + 26], fill=LAND2)
     draw.ellipse([x0 + 188, y0 + 38, x0 + 198, y0 + 50], fill=LAND2)
     for num, px, py in PINS:
         cx, cy = x0 + px, y0 + py
         draw.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], fill=INK)
-        draw.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], outline=PANEL, width=1)
+        draw.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], outline=PANEL, width=2)
         f = face("sans_b", 10)
         tw = text_w(draw, str(num), f)
         draw.text((cx - tw / 2, cy - 7), str(num), font=f, fill=PANEL)
