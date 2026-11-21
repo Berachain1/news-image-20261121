@@ -37,8 +37,8 @@ INK = (20, 36, 62)           # navy, ~15:1 on white, ~12:1 on cream
 BODY = (31, 42, 58)          # near-navy body copy
 RED = (176, 30, 36)          # kicker red, ~7:1 on white
 RULE = (196, 188, 168)       # hairline rules
-LAND = (216, 208, 188)       # map continents
-LAND2 = (198, 206, 190)      # second land tone
+LAND = (203, 192, 168)       # map continents, darker so land reads small
+LAND2 = (186, 196, 178)      # second land tone
 SEA = (233, 236, 228)        # map sea, still light
 CHIP_BG = (238, 233, 219)    # stat chip fill
 
@@ -188,18 +188,21 @@ NUMBERS = [
 ]
 
 # Map pins: (story number, x, y) in the map box's own coordinates.
+# Europe pins are spread >=25 px apart so none touch; pin 11 sits just
+# south-east of Australia (Wellington), inside the frame, never adrift.
 PINS = [
-    (1, 248, 108), (3, 228, 88), (4, 224, 44), (5, 242, 64),
-    (6, 252, 128), (7, 322, 78), (8, 92, 84), (9, 192, 38),
-    (10, 196, 60), (11, 372, 198), (12, 210, 78), (13, 72, 94),
+    (1, 258, 106), (3, 240, 84), (4, 222, 32), (5, 248, 54),
+    (6, 264, 134), (7, 322, 78), (8, 92, 84), (9, 196, 30),
+    (10, 186, 56), (11, 388, 176), (12, 212, 60), (13, 70, 96),
 ]
 
 
 # --- hero pictures: flat scenes, each in its own box, no text on top -------
 
 def paint_riyadh(draw, x0, y0, w, h):
-    """Night over Riyadh: a dusk sky, a towered skyline, three white
-    interceptor streaks bursting in the dark. Nothing written on it."""
+    """Night over Riyadh: a dusk sky, a towered skyline with lit windows,
+    a crescent moon, and three long interceptor trails ending in bright
+    bursts over the city. Nothing written on it."""
     sky_top, sky_mid, sky_low = (16, 28, 54), (52, 68, 104), (196, 110, 58)
     for i in range(h):
         t = i / max(1, h - 1)
@@ -215,6 +218,11 @@ def paint_riyadh(draw, x0, y0, w, h):
         sx = x0 + rng.randint(4, w - 4)
         sy = y0 + rng.randint(4, int(h * 0.45))
         draw.point((sx, sy), fill=(235, 230, 210))
+    # Crescent moon, top right: a pale disc with a sky-coloured bite.
+    mx, my, mr = x0 + w - 38, y0 + 26, 15
+    draw.ellipse([mx - mr, my - mr, mx + mr, my + mr], fill=(242, 232, 190))
+    bite = (29, 42, 72)  # the dusk gradient at this height
+    draw.ellipse([mx - mr + 8, my - mr - 3, mx + mr + 8, my + mr - 3], fill=bite)
     base = y0 + h
     # skyline: dark slabs with lit windows, tallest tower left of centre
     draw.rectangle([x0, base - 58, x0 + w, base], fill=(12, 20, 38))
@@ -233,18 +241,34 @@ def paint_riyadh(draw, x0, y0, w, h):
                  fill=(30, 44, 74))
     draw.polygon([(px + 12, base - 118), (px + 32, base - 118), (px + 28, base - 104),
                   (px + 16, base - 104)], fill=(240, 196, 90))
-    # three interceptor streaks with starbursts
-    for bx, by in [(x0 + 70, y0 + 34), (x0 + 165, y0 + 22), (x0 + 250, y0 + 42)]:
-        draw.line([(bx - 26, by + 30), (bx, by)], fill=(255, 255, 255), width=3)
-        for dx, dy in [(0, -14), (0, 14), (-14, 0), (14, 0),
-                       (-10, -10), (10, -10), (-10, 10), (10, 10)]:
-            draw.line([(bx, by), (bx + dx, by + dy)], fill=(255, 214, 120), width=2)
-        draw.ellipse([bx - 4, by - 4, bx + 4, by + 4], fill=(255, 255, 255))
+    # Three long interceptor trails, each ending in a bright burst.
+    # A trail is a thick orange streak with a white core, rising steeply
+    # from the burst toward the top of the frame; the burst is a glowing
+    # core with long rays and a shock ring.
+    import math
+    for (bx, by), (tx, ty) in [((x0 + 78, y0 + 46), (x0 + 46, y0 + 2)),
+                               ((x0 + 168, y0 + 36), (x0 + 196, y0 + 2)),
+                               ((x0 + 252, y0 + 56), (x0 + 224, y0 + 6))]:
+        draw.line([(tx, ty), (bx, by)], fill=(240, 140, 60), width=5)
+        draw.line([(tx, ty), (bx, by)], fill=(255, 255, 255), width=2)
+        draw.ellipse([tx - 3, ty - 3, tx + 3, ty + 3], fill=(255, 190, 90))
+        draw.ellipse([bx - 13, by - 13, bx + 13, by + 13], fill=(255, 160, 60))
+        draw.ellipse([bx - 9, by - 9, bx + 9, by + 9], fill=(255, 214, 120))
+        draw.ellipse([bx - 5, by - 5, bx + 5, by + 5], fill=(255, 255, 255))
+        for k in range(12):
+            a = math.radians(k * 30)
+            r1, r2 = 12, 21 if k % 2 == 0 else 16
+            draw.line([(bx + int(r1 * math.cos(a)), by + int(r1 * math.sin(a))),
+                       (bx + int(r2 * math.cos(a)), by + int(r2 * math.sin(a)))],
+                      fill=(255, 214, 120) if k % 2 else (255, 255, 255), width=2)
+        draw.ellipse([bx - 18, by - 18, bx + 18, by + 18],
+                     outline=(255, 214, 120), width=1)
 
 
 def paint_mercury(draw, x0, y0, w, h):
-    """Mercury fills the right of the frame, cratered grey on black;
-    the twin orbiters with gold panels approach from the left."""
+    """Mercury sits to the right, a modest cratered disc; the two
+    BepiColombo orbiters fly large in the left half, gold panels spread,
+    on a faint orbit arc, against a starfield. Nothing written on it."""
     draw.rectangle([x0, y0, x0 + w, y0 + h], fill=(10, 12, 24))
     import random
     rng = random.Random(7)
@@ -252,72 +276,106 @@ def paint_mercury(draw, x0, y0, w, h):
         sx = x0 + rng.randint(2, w - 2)
         sy = y0 + rng.randint(2, h - 2)
         draw.point((sx, sy), fill=(220, 220, 235))
-    cx, cy, r = x0 + w - 52, y0 + h // 2 + 6, 86
+    # Mercury: a modest disc at the right, craters small.
+    cx, cy, r = x0 + w - 56, y0 + h // 2 + 4, 54
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(168, 160, 148))
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], outline=(120, 112, 100), width=2)
-    for ox, oy, orad, shade in [(cx - 34, cy - 30, 16, (140, 132, 120)),
-                                (cx + 18, cy + 8, 22, (146, 138, 126)),
-                                (cx - 8, cy + 42, 12, (128, 120, 108)),
-                                (cx + 44, cy - 44, 10, (150, 142, 130)),
-                                (cx - 52, cy + 18, 8, (136, 128, 116))]:
+    for ox, oy, orad, shade in [(cx - 22, cy - 18, 10, (140, 132, 120)),
+                                (cx + 12, cy + 6, 14, (146, 138, 126)),
+                                (cx - 4, cy + 26, 8, (128, 120, 108)),
+                                (cx + 28, cy - 26, 7, (150, 142, 130)),
+                                (cx - 32, cy + 10, 5, (136, 128, 116))]:
         draw.ellipse([ox - orad, oy - orad, ox + orad, oy + orad], fill=shade)
         draw.arc([ox - orad, oy - orad, ox + orad, oy + orad], 200, 340,
                  fill=(110, 102, 92), width=2)
-    # twin orbiters: two stacked bodies, gold solar wings, a thruster glow
-    bx, by = x0 + 52, y0 + h // 2 - 6
-    draw.rectangle([bx - 46, by - 8, bx - 8, by + 8], fill=(212, 164, 60))
-    draw.line([(bx - 46, by), (bx - 8, by)], fill=(150, 108, 30), width=2)
-    draw.rectangle([bx - 46, by - 8, bx - 8, by + 8], outline=(120, 84, 20), width=1)
-    draw.rectangle([bx + 8, by - 8, bx + 46, by + 8], fill=(212, 164, 60))
-    draw.rectangle([bx + 8, by - 8, bx + 46, by + 8], outline=(120, 84, 20), width=1)
-    draw.rectangle([bx - 10, by - 12, bx + 10, by + 12], fill=(226, 228, 232))
-    draw.rectangle([bx - 10, by - 12, bx + 10, by + 12], outline=(120, 124, 132), width=1)
-    draw.rectangle([bx - 4, by - 20, bx + 4, by - 12], fill=(180, 186, 196))
-    draw.polygon([(bx + 10, by - 6), (bx + 26, by - 12), (bx + 26, by + 12),
-                  (bx + 10, by + 6)], fill=(120, 190, 230))
-    draw.ellipse([bx + 24, by - 8, bx + 40, by + 8], fill=(160, 220, 250))
+    # Faint orbit arc sweeping from the spacecraft toward Mercury.
+    draw.arc([cx - 168, cy - 74, cx + 168, cy + 74], 130, 245,
+             fill=(150, 150, 165), width=1)
+
+    def orbiter(bx, by, s):
+        """One orbiter: a silver-blue body, gold solar wings with grid
+        seams, a dish, and a blue thruster glow. s scales the craft."""
+        pw, ph = int(52 * s), int(14 * s)
+        bw, bh = int(26 * s), int(20 * s)
+        # gold wings, left and right of the body
+        for sx0 in (bx - pw - bw // 2, bx + bw // 2):
+            draw.rectangle([sx0, by - ph // 2, sx0 + pw, by + ph // 2],
+                           fill=(212, 164, 60))
+            draw.rectangle([sx0, by - ph // 2, sx0 + pw, by + ph // 2],
+                           outline=(120, 84, 20), width=1)
+            for gx in range(sx0 + pw // 3, sx0 + pw, pw // 3):
+                draw.line([(gx, by - ph // 2), (gx, by + ph // 2)],
+                          fill=(150, 108, 30), width=1)
+            draw.line([(sx0, by), (sx0 + pw, by)], fill=(150, 108, 30), width=1)
+        # silver-blue body with a dark window and a mast
+        draw.rectangle([bx - bw // 2, by - bh // 2, bx + bw // 2, by + bh // 2],
+                       fill=(200, 208, 222))
+        draw.rectangle([bx - bw // 2, by - bh // 2, bx + bw // 2, by + bh // 2],
+                       outline=(110, 118, 134), width=1)
+        draw.rectangle([bx - bw // 2 + 3, by - 3, bx + bw // 2 - 3, by + 3],
+                       fill=(30, 60, 110))
+        draw.line([(bx, by - bh // 2), (bx, by - bh // 2 - int(10 * s))],
+                  fill=(180, 186, 196), width=2)
+        draw.ellipse([bx - 2, by - bh // 2 - int(12 * s),
+                      bx + 2, by - bh // 2 - int(8 * s)], fill=(226, 228, 232))
+        # thruster glow trailing to the lower left
+        draw.polygon([(bx - bw // 2, by + bh // 2 - 3),
+                      (bx - bw // 2 - int(18 * s), by + bh // 2 + int(6 * s)),
+                      (bx - bw // 2, by + bh // 2 + 3)], fill=(120, 190, 230))
+        draw.ellipse([bx - bw // 2 - int(22 * s), by + bh // 2,
+                      bx - bw // 2 - int(10 * s), by + bh // 2 + int(12 * s)],
+                     fill=(170, 225, 250))
+
+    orbiter(x0 + 82, y0 + 44, 1.0)
+    orbiter(x0 + 118, y0 + 96, 0.85)
 
 
 def paint_cop31(draw, x0, y0, w, h):
-    """A summit hall in overtime: teal wall, a big round clock, a long
-    table with flags and name plates, delegates in silhouette."""
+    """COP31 in overtime: one big red thermometer rising past the top of
+    its tube against a teal wall, over a simple negotiation table with
+    small flags. No delegates, no clock, no words on the picture."""
     draw.rectangle([x0, y0, x0 + w, y0 + h], fill=(18, 84, 88))
-    draw.rectangle([x0, y0 + h - 46, x0 + w, y0 + h], fill=(122, 74, 40))
-    # round wall clock, hands past midnight, top-left clear of delegates
-    ccx, ccy, cr = x0 + 44, y0 + 32, 24
-    draw.ellipse([ccx - cr, ccy - cr, ccx + cr, ccy + cr], fill=(250, 247, 240))
-    draw.ellipse([ccx - cr, ccy - cr, ccx + cr, ccy + cr], outline=(20, 36, 62), width=3)
-    for ang in range(0, 360, 30):
-        import math
-        a = math.radians(ang)
-        draw.line([(ccx + int(19 * math.sin(a)), ccy - int(19 * math.cos(a))),
-                   (ccx + int(22 * math.sin(a)), ccy - int(22 * math.cos(a)))],
-                  fill=(20, 36, 62), width=2)
-    draw.line([(ccx, ccy), (ccx - 2, ccy - 15)], fill=(176, 30, 36), width=3)
-    draw.line([(ccx, ccy), (ccx + 11, ccy - 4)], fill=(20, 36, 62), width=3)
-    draw.ellipse([ccx - 3, ccy - 3, ccx + 3, ccy + 3], fill=(176, 30, 36))
-    # long table with a pale cloth and small flags
-    draw.rectangle([x0 + 14, y0 + h - 78, x0 + w - 14, y0 + h - 40],
+    # Thermometer: a tall white tube with a round bulb, red fill rising
+    # almost to the top, tick marks on the right, no numbers.
+    tx = x0 + w // 2
+    tube_top, tube_bot, tube_w = y0 + 12, y0 + 92, 30
+    bulb_cy, bulb_r = y0 + 96, 21
+    draw.rounded_rectangle([tx - tube_w // 2, tube_top,
+                            tx + tube_w // 2, tube_bot],
+                           radius=tube_w // 2, fill=(250, 247, 240))
+    draw.ellipse([tx - bulb_r, bulb_cy - bulb_r, tx + bulb_r, bulb_cy + bulb_r],
+                 fill=(250, 247, 240))
+    draw.ellipse([tx - bulb_r, bulb_cy - bulb_r, tx + bulb_r, bulb_cy + bulb_r],
+                 outline=(20, 36, 62), width=2)
+    draw.rounded_rectangle([tx - tube_w // 2, tube_top,
+                            tx + tube_w // 2, tube_bot],
+                           radius=tube_w // 2, outline=(20, 36, 62), width=2)
+    # red fill: from the bulb up to near the top of the tube
+    fill_top = y0 + 24
+    draw.rounded_rectangle([tx - tube_w // 2 + 5, fill_top,
+                            tx + tube_w // 2 - 5, tube_bot],
+                           radius=8, fill=(176, 30, 36))
+    draw.ellipse([tx - bulb_r + 5, bulb_cy - bulb_r + 5,
+                  tx + bulb_r - 5, bulb_cy + bulb_r - 5], fill=(176, 30, 36))
+    # glass highlight down the left of the tube
+    draw.line([(tx - tube_w // 2 + 9, fill_top + 8),
+               (tx - tube_w // 2 + 9, tube_bot - 6)], fill=(232, 120, 110), width=3)
+    # tick marks on the right of the tube
+    for ty in (y0 + 30, y0 + 46, y0 + 62, y0 + 78):
+        draw.line([(tx + tube_w // 2 + 2, ty), (tx + tube_w // 2 + 12, ty)],
+                  fill=(250, 247, 240), width=2)
+    # Negotiation table: a pale strip at the bottom with small flags.
+    draw.rectangle([x0 + 14, y0 + h - 24, x0 + w - 14, y0 + h],
                    fill=(250, 247, 240))
-    draw.rectangle([x0 + 14, y0 + h - 78, x0 + w - 14, y0 + h - 40],
+    draw.rectangle([x0 + 14, y0 + h - 24, x0 + w - 14, y0 + h],
                    outline=(20, 36, 62), width=2)
-    flag_cols = [(176, 30, 36), (20, 90, 60), (30, 60, 140), (220, 150, 30),
-                 (120, 40, 110), (30, 120, 140)]
-    for i, col in enumerate(flag_cols):
-        fx = x0 + 86 + i * 38
-        draw.line([(fx, y0 + h - 78), (fx, y0 + h - 104)], fill=(60, 50, 40), width=2)
-        draw.polygon([(fx, y0 + h - 104), (fx + 18, y0 + h - 99), (fx, y0 + h - 94)],
+    flag_cols = [(176, 30, 36), (20, 90, 60), (30, 60, 140), (220, 150, 30)]
+    # four flags, two each side of the thermometer bulb, never over it
+    for i, (fx, col) in enumerate(zip([x0 + 40, x0 + 92, x0 + 222, x0 + 274],
+                                      flag_cols)):
+        draw.line([(fx, y0 + h - 24), (fx, y0 + h - 44)], fill=(60, 50, 40), width=2)
+        draw.polygon([(fx, y0 + h - 44), (fx + 18, y0 + h - 39), (fx, y0 + h - 34)],
                      fill=col)
-        draw.rectangle([fx - 8, y0 + h - 72, fx + 26, y0 + h - 60], fill=(238, 233, 219))
-    # delegates: dark silhouettes with pale shirts behind the table
-    for i, dx in enumerate([96, 140, 184, 228, 272]):
-        draw.ellipse([x0 + dx - 11, y0 + h - 132, x0 + dx + 11, y0 + h - 108],
-                     fill=(24, 32, 48))
-        draw.polygon([(x0 + dx - 16, y0 + h - 78), (x0 + dx + 16, y0 + h - 78),
-                      (x0 + dx + 10, y0 + h - 110), (x0 + dx - 10, y0 + h - 110)],
-                     fill=(24, 32, 48) if i % 2 == 0 else (58, 66, 84))
-        draw.rectangle([x0 + dx - 3, y0 + h - 108, x0 + dx + 3, y0 + h - 92],
-                       fill=(250, 247, 240))
 
 
 # --- the world map: schematic continents, numbered navy pins --------------
@@ -343,7 +401,7 @@ def paint_map(draw, x0, y0, w, h):
     ]
     for poly in continents:
         pts = [(x0 + px, y0 + py) for px, py in poly]
-        draw.polygon(pts, fill=LAND)
+        draw.polygon(pts, fill=LAND, outline=(188, 178, 152))
     # Greenland + Britain hints
     draw.ellipse([x0 + 138, y0 + 8, x0 + 168, y0 + 26], fill=LAND2)
     draw.ellipse([x0 + 188, y0 + 38, x0 + 198, y0 + 50], fill=LAND2)
@@ -354,6 +412,99 @@ def paint_map(draw, x0, y0, w, h):
         f = face("sans_b", 10)
         tw = text_w(draw, str(num), f)
         draw.text((cx - tw / 2, cy - 7), str(num), font=f, fill=PANEL)
+
+
+# --- grid icons: one bold shape per cell, no text inside --------------------
+
+def paint_grid_icon(draw, gx, gy, w, num):
+    """A 22 px icon strip at the top of a grid cell: one bold, instantly
+    readable shape on a flat band. No words inside the strip."""
+    import math
+    band = {
+        4: (20, 40, 90), 5: (24, 28, 44), 6: (16, 90, 96),
+        7: (30, 38, 54), 8: (18, 32, 60), 9: (24, 36, 62),
+        10: (24, 52, 110), 11: (24, 100, 60), 12: (20, 90, 70),
+        13: (250, 247, 240),
+    }[num]
+    draw.rectangle([gx, gy, gx + w, gy + 22], fill=band)
+    cx, cy = gx + w // 2, gy + 11
+    if num == 4:
+        # NATO compass star, white on navy
+        pts = []
+        for k in range(8):
+            a = math.radians(k * 45)
+            r = 10 if k % 2 == 0 else 3.5
+            pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+        draw.polygon(pts, fill=(255, 255, 255))
+        draw.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=(20, 40, 90))
+    elif num == 5:
+        # explosion burst, gold and white on charcoal
+        for k in range(12):
+            a = math.radians(k * 30)
+            r2 = 10 if k % 2 == 0 else 7
+            draw.line([(cx, cy), (cx + int(r2 * math.cos(a)),
+                                 cy + int(r2 * math.sin(a)))],
+                      fill=(255, 214, 120) if k % 2 else (255, 255, 255), width=2)
+        draw.ellipse([cx - 6, cy - 6, cx + 6, cy + 6], fill=(255, 160, 60))
+        draw.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], fill=(255, 255, 255))
+    elif num == 6:
+        # port crane lifting a container over a ship hull, pale on teal
+        draw.line([(cx - 26, gy + 3), (cx - 26, gy + 18)], fill=(250, 247, 240), width=4)
+        draw.line([(cx - 26, gy + 3), (cx + 26, gy + 10)], fill=(250, 247, 240), width=3)
+        draw.line([(cx - 26, gy + 3), (cx - 38, gy + 8)], fill=(250, 247, 240), width=3)
+        draw.line([(cx + 16, gy + 8), (cx + 16, gy + 14)], fill=(250, 247, 240), width=2)
+        draw.rectangle([cx + 10, gy + 14, cx + 22, gy + 18], fill=(250, 247, 240))
+        draw.rectangle([cx - 32, gy + 18, cx + 32, gy + 21], fill=(12, 20, 38))
+        draw.rectangle([cx - 32, gy + 18, cx + 32, gy + 21], outline=(250, 247, 240), width=1)
+    elif num == 7:
+        # gold chip with pins, on dark slate
+        draw.rounded_rectangle([cx - 7, cy - 7, cx + 7, cy + 7], radius=2,
+                               fill=(212, 164, 60))
+        draw.rounded_rectangle([cx - 7, cy - 7, cx + 7, cy + 7], radius=2,
+                               outline=(120, 84, 20), width=1)
+        for dx in (-4, 0, 4):
+            draw.line([(cx + dx, cy - 11), (cx + dx, cy - 7)], fill=(212, 164, 60), width=2)
+            draw.line([(cx + dx, cy + 7), (cx + dx, cy + 11)], fill=(212, 164, 60), width=2)
+            draw.line([(cx - 11, cy + dx), (cx - 7, cy + dx)], fill=(212, 164, 60), width=2)
+            draw.line([(cx + 7, cy + dx), (cx + 11, cy + dx)], fill=(212, 164, 60), width=2)
+    elif num == 8:
+        # bank: pediment, three columns, base, white on navy
+        draw.polygon([(cx - 34, cy + 2), (cx + 34, cy + 2), (cx, cy - 8)],
+                     fill=(255, 255, 255))
+        for colx in (cx - 24, cx - 2, cx + 20):
+            draw.rectangle([colx, cy + 4, colx + 4, cy + 8], fill=(255, 255, 255))
+        draw.rectangle([cx - 34, cy + 9, cx + 34, cy + 11], fill=(255, 255, 255))
+    elif num == 9:
+        # handcuffs: two white rings joined by a bar, on navy
+        for rx in (cx - 12, cx + 12):
+            draw.ellipse([rx - 6, cy - 6, rx + 6, cy + 6],
+                         outline=(255, 255, 255), width=2)
+        draw.line([(cx - 6, cy), (cx + 6, cy)], fill=(255, 255, 255), width=2)
+    elif num == 10:
+        # gold coin: a disc with an inner ring, on dark blue
+        draw.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], fill=(212, 164, 60))
+        draw.ellipse([cx - 5, cy - 5, cx + 5, cy + 5],
+                     outline=(150, 108, 30), width=2)
+    elif num == 11:
+        # cricket bat and red ball, on green
+        draw.line([(cx - 26, cy + 7), (cx - 4, cy - 7)], fill=(250, 247, 240), width=7)
+        draw.line([(cx - 4, cy - 7), (cx + 8, cy - 9)], fill=(250, 247, 240), width=3)
+        draw.ellipse([cx + 6, cy - 2, cx + 18, cy + 10], fill=(176, 30, 36))
+        draw.ellipse([cx + 6, cy - 2, cx + 18, cy + 10], outline=(120, 20, 24), width=1)
+    elif num == 12:
+        # tennis ball with white seams, on dark green
+        draw.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], fill=(190, 220, 60))
+        draw.arc([cx - 9, cy - 9, cx + 9, cy + 9], 55, 125, fill=(255, 255, 255), width=2)
+        draw.arc([cx - 9, cy - 9, cx + 9, cy + 9], 235, 305, fill=(255, 255, 255), width=2)
+    elif num == 13:
+        # chequered flag: black and white squares across the strip
+        sq = w // 8
+        for col in range(8):
+            for row in range(2):
+                if (col + row) % 2 == 0:
+                    draw.rectangle([gx + col * sq, gy + row * 11,
+                                    gx + (col + 1) * sq, gy + (row + 1) * 11],
+                                   fill=(16, 16, 16))
 
 
 # --- page assembly ----------------------------------------------------------
@@ -422,7 +573,8 @@ def paint_page():
             sf = face("sans_b", 10)
             draw.text((hx + 8, py + 90), hero["stats"], font=sf, fill=INK)
 
-    # Ten-story grid: two rows of five white cells, red top rule each.
+    # Ten-story grid: two rows of five white cells, one bold icon strip
+    # on top of each, then kicker, headline and deck below it.
     grid_y, grid_h = 444, 200
     cell_w, cell_gap = 185, 10
     row_h = grid_h // 2
@@ -431,18 +583,18 @@ def paint_page():
         gx = MARGIN + col * (cell_w + cell_gap)
         gy = grid_y + row * row_h
         draw.rectangle([gx, gy, gx + cell_w, gy + row_h - 4], fill=PANEL)
-        draw.rectangle([gx, gy, gx + cell_w, gy + 3], fill=RED)
+        paint_grid_icon(draw, gx, gy, cell_w, story["num"])
         draw.rectangle([gx, gy, gx + cell_w, gy + row_h - 4], outline=RULE, width=1)
         kicker = f"{story['num']} · {story['place']} · {story['beat']}"
-        draw.text((gx + 7, gy + 8), kicker, font=face("sans_b", 10), fill=RED)
+        draw.text((gx + 7, gy + 26), kicker, font=face("sans_b", 10), fill=RED)
         hf = face("serif_b", 15)
-        head_lines = fit_block(draw, story["head"], hf, cell_w - 14, 3,
+        head_lines = fit_block(draw, story["head"], hf, cell_w - 14, 2,
                                f"grid {story['num']}")
-        draw_lines(draw, head_lines, gx + 7, gy + 24, hf, INK, 17)
+        draw_lines(draw, head_lines, gx + 7, gy + 40, hf, INK, 16)
         df = face("sans", 11)
         deck_lines = fit_block(draw, story["deck"], df, cell_w - 14, 2,
                                f"grid deck {story['num']}")
-        draw_lines(draw, deck_lines, gx + 7, gy + 72, df, BODY, 13)
+        draw_lines(draw, deck_lines, gx + 7, gy + 72, df, BODY, 12)
 
     # Bottom band: map left, 23 one-line briefs right.
     bot_y, bot_h = 652, 254
