@@ -293,15 +293,17 @@ def paint_mercury(draw, x0, y0, w, h):
         sx = x0 + rng.randint(2, w - 2)
         sy = y0 + rng.randint(2, h - 2)
         draw.point((sx, sy), fill=(220, 220, 235))
-    # Mercury: a modest disc at the right, craters small.
-    cx, cy, r = x0 + w - 56, y0 + h // 2 + 4, 54
+    # Mercury: a small disc at the right, craters small. Bos: r=54 was
+    # still too big ("kurang kecil") — r=33 leaves clear space on all
+    # sides and lets the two orbiters dominate the box.
+    cx, cy, r = x0 + w - 48, y0 + h // 2 + 4, 33
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(168, 160, 148))
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], outline=(120, 112, 100), width=2)
-    for ox, oy, orad, shade in [(cx - 22, cy - 18, 10, (140, 132, 120)),
-                                (cx + 12, cy + 6, 14, (146, 138, 126)),
-                                (cx - 4, cy + 26, 8, (128, 120, 108)),
-                                (cx + 28, cy - 26, 7, (150, 142, 130)),
-                                (cx - 32, cy + 10, 5, (136, 128, 116))]:
+    for ox, oy, orad, shade in [(cx - 13, cy - 11, 6, (140, 132, 120)),
+                                (cx + 7, cy + 4, 9, (146, 138, 126)),
+                                (cx - 2, cy + 16, 5, (128, 120, 108)),
+                                (cx + 17, cy - 16, 4, (150, 142, 130)),
+                                (cx - 20, cy + 6, 3, (136, 128, 116))]:
         draw.ellipse([ox - orad, oy - orad, ox + orad, oy + orad], fill=shade)
         draw.arc([ox - orad, oy - orad, ox + orad, oy + orad], 200, 340,
                  fill=(110, 102, 92), width=2)
