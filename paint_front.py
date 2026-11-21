@@ -13,7 +13,10 @@ underneath them. Headlines are bold navy, kickers are bold red on white
 only, and body copy never drops below 10.5pt at full size.
 
 Everything on the page is drawn here with Pillow from the story tables
-below; nothing is fetched, nothing is copied in. Run it with:
+below; nothing is fetched at run time. The one exception is the world map:
+its land outline comes from the Natural Earth 110m land dataset (public
+domain), stored in the repo as assets/ne_110m_land.geojson and read from
+disk, so the program still runs with no network.
 
     python3 paint_front.py
 
@@ -187,13 +190,25 @@ NUMBERS = [
     ("2", "killed in the Kryvyi Rih strike"),
 ]
 
-# Map pins: (story number, x, y) in the map box's own coordinates.
-# Europe pins are spread >=25 px apart so none touch; pin 11 sits just
-# south-east of Australia (Wellington), inside the frame, never adrift.
-PINS = [
-    (1, 258, 106), (3, 240, 84), (4, 222, 32), (5, 248, 54),
-    (6, 264, 134), (7, 322, 78), (8, 92, 84), (9, 196, 30),
-    (10, 186, 56), (11, 388, 176), (12, 212, 60), (13, 70, 96),
+# Map pins: (story number, longitude, latitude, nudge dx, nudge dy in px).
+# True city coordinates; the dx/dy nudges only spread the tight Europe
+# cluster so no two pins touch (all nudges <= 12 px, pins stay on the
+# right country). Pin 2 is Mercury, off this map, per the note under
+# the map title. Pin 11 (Wellington) sits just inside the frame's
+# bottom-right corner.
+PIN_GEO = [
+    (1, 46.7, 24.7, 0, 0),       # Riyadh
+    (3, 30.7, 36.9, 0, 6),       # Antalya
+    (4, 21.0, 52.2, 8, -6),      # Warsaw
+    (5, 33.4, 47.9, 12, 0),      # Kryvyi Rih
+    (6, 42.8, 14.8, 0, 0),       # Hodeidah
+    (7, 116.4, 39.9, 0, 0),      # Beijing
+    (8, -74.0, 40.7, 0, 0),      # New York
+    (9, 12.6, 55.7, -8, -8),     # Copenhagen
+    (10, 4.35, 50.85, -10, 2),   # Brussels
+    (11, 174.8, -41.3, -12, 0),  # Wellington (nudged left: true x is 394, pin would clip the frame)
+    (12, 7.7, 45.1, -2, 10),     # Turin
+    (13, -115.1, 36.2, 0, 0),    # Las Vegas
 ]
 
 
@@ -378,35 +393,47 @@ def paint_cop31(draw, x0, y0, w, h):
                      fill=col)
 
 
-# --- the world map: schematic continents, numbered navy pins --------------
+# --- the world map: real Natural Earth land outline, numbered pins -------
+#
+# The land comes from assets/ne_110m_land.geojson (Natural Earth 110m land,
+# public domain, 127 polygons). Equirectangular projection over the map box:
+# longitude -180..180 across, latitude 85..-60 top to bottom (Antarctica
+# is clipped at the bottom edge of the panel). Polygons are clamped to the
+# box so nothing paints outside the frame.
+
+import json
+
+_LAND_CACHE = {}
+
+
+def _load_land(w, h):
+    """Project the bundled land polygons into box coordinates once."""
+    if (w, h) in _LAND_CACHE:
+        return _LAND_CACHE[(w, h)]
+    with open(HERE / "assets" / "ne_110m_land.geojson", encoding="utf-8") as fh:
+        data = json.load(fh)
+    polys = []
+    for feat in data["features"]:
+        for ring in feat["geometry"]["coordinates"]:
+            pts = []
+            for lon, lat in ring:
+                px = (lon + 180.0) / 360.0 * w
+                py = (85.0 - lat) / 145.0 * h
+                pts.append((min(max(px, 0.0), w), min(max(py, 0.0), h)))
+            if len(pts) >= 3:
+                polys.append(pts)
+    _LAND_CACHE[(w, h)] = polys
+    return polys
+
 
 def paint_map(draw, x0, y0, w, h):
     draw.rectangle([x0, y0, x0 + w, y0 + h], fill=SEA)
-    # Rough continent blobs, drawn as flat polygons in my own coordinates.
-    continents = [
-        # North America
-        [(18, 42), (58, 22), (108, 26), (128, 46), (112, 66), (84, 62),
-         (66, 82), (48, 78), (30, 62)],
-        # South America
-        [(78, 108), (104, 100), (118, 122), (104, 158), (88, 150), (74, 124)],
-        # Europe
-        [(196, 34), (222, 26), (238, 40), (228, 54), (206, 56), (194, 46)],
-        # Africa
-        [(196, 74), (228, 66), (248, 84), (240, 118), (216, 132), (198, 104)],
-        # Asia
-        [(244, 30), (300, 18), (352, 30), (368, 52), (340, 74), (300, 82),
-         (268, 66), (246, 52)],
-        # Australia
-        [(330, 138), (366, 132), (382, 150), (352, 164), (330, 154)],
-    ]
-    for poly in continents:
+    for poly in _load_land(w, h):
         pts = [(x0 + px, y0 + py) for px, py in poly]
         draw.polygon(pts, fill=LAND, outline=(58, 96, 58))
-    # Greenland + Britain hints
-    draw.ellipse([x0 + 138, y0 + 8, x0 + 168, y0 + 26], fill=LAND2)
-    draw.ellipse([x0 + 188, y0 + 38, x0 + 198, y0 + 50], fill=LAND2)
-    for num, px, py in PINS:
-        cx, cy = x0 + px, y0 + py
+    for num, lon, lat, dx, dy in PIN_GEO:
+        cx = x0 + (lon + 180.0) / 360.0 * w + dx
+        cy = y0 + (85.0 - lat) / 145.0 * h + dy
         draw.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], fill=INK)
         draw.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], outline=PANEL, width=2)
         f = face("sans_b", 10)
